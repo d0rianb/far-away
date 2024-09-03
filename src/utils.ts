@@ -12,3 +12,7 @@ export function shuffle(array: Array) {
             array[randomIndex], array[currentIndex]];
     }
 }
+
+export function all(arr: Array<T>, predicate: Function): boolean {
+    return arr.filter(predicate).length == arr.length
+}

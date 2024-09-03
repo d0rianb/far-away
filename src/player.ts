@@ -31,6 +31,13 @@ class Player extends GameObject {
         }
     }
 
+    getLastCard(): Card | null {
+        if (this.playedCards.length > 0) {
+            return this.playedCards[this.playedCards.length - 1]
+        }
+        return null
+    }
+
     updateDeck() {
         const renderVertically: boolean = Math.abs(Math.cos(this.orientation)) > 0.7
         const selectedMargin = 20

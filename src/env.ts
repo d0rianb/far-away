@@ -2,7 +2,7 @@ import { clamp, GameEnvironement, getWindowDimensions, Renderer, Event } from 'u
 
 import { Card, CARDS } from './card.ts'
 import { Player } from './player.ts';
-import { shuffle } from './utils.ts';
+import { shuffle, all } from './utils.ts';
 
 const CARD_PER_PLAYER: number = 3
 
@@ -18,6 +18,8 @@ class Env extends GameEnvironement {
     discard: Array<Card>
 
     players: Array<Player>
+    state: State
+    rounds: number
 
     constructor(playerNumber: number) {
         const { width, height } = getWindowDimensions()
@@ -25,7 +27,9 @@ class Env extends GameEnvironement {
 
         this.deck = CARDS
         shuffle(this.deck)
-        this.visibleCards = this.deck.slice(playerNumber + 1)
+        this.visibleCards = this.deck.splice(0, playerNumber + 1)
+        this.state = State.Play
+        this.rounds = 1
 
         this.players = []
         for (let i = 0; i < playerNumber; i++) {
@@ -53,8 +57,7 @@ class Env extends GameEnvironement {
             ))
         }
         this.players[2].isOwnPlayer = true
-        // for test purpose 
-        this.players.forEach(player => player.playedCards = this.deck.splice(0, 3))
+
         console.log(this.players)
         this.initEvents()
         Renderer.create()
@@ -63,15 +66,85 @@ class Env extends GameEnvironement {
     initEvents(): void {
         Event.onClick(mouseEvent => {
             const { x, y } = mouseEvent
-            this.players.forEach(player => {
-                if (player.contains(x, y)) {
-                    player.onClick(x, y)
-                }
-            })
+            switch (this.state) {
+                case State.Play:
+                    this.players.forEach(player => {
+                        if (player.contains(x, y)) {
+                            player.onClick(x, y)
+                        }
+                    })
+                    break
+                case State.Pick:
+                    let sortedPlayers = this.players
+                        .slice()
+                        .filter(player => player.hand.length == 2 && player.playedCards.length > 0)
+                        .sort((playerA, playerB) => playerA.getLastCard()?.index - playerB.getLastCard()?.index)
+                    if (sortedPlayers.length > 0) {
+                        let playerToChoose = sortedPlayers[0]
+                        for (let i = 0; i < this.visibleCards.length; i++) {
+                            let card = this.visibleCards[i]
+                            if (card.contains(x, y)) {
+                                let clickedCard = this.visibleCards.splice(i, 1)[0]
+                                if (!playerToChoose.isOwnPlayer) {
+                                    clickedCard.isHided = true
+                                }
+                                playerToChoose.hand.push(clickedCard)
+                            }
+                        }
+                    }
+                    break
+            }
         })
     }
 
+    checkState() {
+        switch (this.state) {
+            case State.Play:
+                // If all player have choose their cards
+                if (all(this.players, player => player.selectedCardIndex >= 0)) {
+                    this.players.forEach(player => {
+                        player.playedCards.push(player.hand.splice(player.selectedCardIndex, 1)[0])
+                        player.selectedCardIndex = -1
+                    })
+                    this.state = (this.state + 1) % 3
+                }
+                break
+
+            case State.Sanctuary:
+                // Not Implemeneted yet
+                if (this.rounds == 8) {
+                    // End of the game
+                } else {
+                    this.state = (this.state + 1) % 3
+                }
+                break
+            case State.Pick:
+                if (all(this.players, player => player.hand.length === 3)) {
+                    // Discard the lasting cards
+                    this.visibleCards = this.deck.splice(0, this.players.length + 1)
+                    this.state = (this.state + 1) % 3
+                }
+                this.rounds += 1
+                break
+
+        }
+    }
+
     update(): void {
+        this.checkState()
+        const cardMargin = 5
+
+        for (let i = 0; i < this.visibleCards.length; i++) {
+            let card = this.visibleCards[i]
+            card.isHided = false
+
+            let x = (this.width - this.visibleCards.length * (card.width + cardMargin)) / 2 + i * (card.width + cardMargin)
+            let y = (this.height - card.height) / 2
+
+            card.moveTo(x, y)
+        }
+
+
         this.players.forEach(player => player.update())
         this.render()
     }
@@ -79,6 +152,9 @@ class Env extends GameEnvironement {
 
     render(): void {
         Renderer.beginFrame()
+
+        this.visibleCards.forEach(card => card.render())
+
         this.players.forEach(player => {
             player.render()
         })
