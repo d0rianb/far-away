@@ -8,7 +8,7 @@ const CARD_PER_PLAYER: number = 3
 
 enum State {
     Play = 0,
-    Stacuary = 1,
+    Sanctuary = 1,
     Pick = 2
 }
 
@@ -33,11 +33,11 @@ class Env extends GameEnvironement {
             const isVertical = Math.abs(Math.cos(orientation)) > 0.7
             let playerWidth, playerHeight
             if (isVertical) {
-                playerHeight = width! / 3
-                playerWidth = height! / 4
-            } else {
-                playerWidth = width! / 3
-                playerHeight = height! / 4
+                playerHeight = height! / 3 * 2
+                playerWidth = height! / 3
+            } else { // Horizontal
+                playerWidth = width! - height / 3 * 2
+                playerHeight = height! / 3
 
             }
             let x = width! / 2 + width! / 2 * Math.cos(orientation) - playerWidth / 2
@@ -52,8 +52,9 @@ class Env extends GameEnvironement {
                 orientation
             ))
         }
+        this.players[2].isOwnPlayer = true
         // for test purpose 
-        this.players.forEach(player => player.game = this.deck.splice(0, 8))
+        this.players.forEach(player => player.playedCards = this.deck.splice(0, 3))
         console.log(this.players)
         this.initEvents()
         Renderer.create()

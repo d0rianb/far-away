@@ -70,7 +70,7 @@ enum Color {
     Yellow = 'rgb(220, 200, 90)'
 }
 
-const CARD_SIZE: number = 100;
+const DEFAULT_CARD_SIZE: number = 90
 
 class Card extends GameObject {
     index: number
@@ -80,13 +80,15 @@ class Card extends GameObject {
     conditions: Resources
     points: PointType
     hasSancturay: boolean
+
     animationX: Animation | null;
     animationY: Animation | null;
     angle: number;
+    isHided: boolean
 
     constructor(index: number, color: Color, resources: Resources, conditions: Resources, points: PointType, hasSancturay: boolean = false) {
         // Init the card at 0, 0
-        super(0, 0, CARD_SIZE, CARD_SIZE)
+        super(0, 0, DEFAULT_CARD_SIZE, DEFAULT_CARD_SIZE)
         this.angle = 0
         this.animationX = null
         this.animationY = null
@@ -99,6 +101,7 @@ class Card extends GameObject {
         this.conditions = conditions
         this.points = points
         this.hasSancturay = hasSancturay
+        this.isHided = true
     }
 
     moveTo(x: number, y: number) {
@@ -136,64 +139,72 @@ class Card extends GameObject {
             ctx.rotate(this.angle)
             ctx.translate(-this.width / 2, -this.height)
         }
-        // Draw the card relative to 0, 0
-        Renderer.roundedRect(
-            0, 0, this.width!, this.height!, 12, {
-            fillStyle: this.color,
-            lineWidth: 0
-        })
-        // Basic unit
-        const percent = this.width! / 100;
 
-        // Draw the number
-        Renderer.circle(15 * percent, 15 * percent, 12 * percent, {
-            strokeStyle: this.isNight ? 'blue' : 'yellow',
-            lineWidth: 2
-        })
-        Renderer.centeredText(this.index.toString(), 15 * percent, 15 * percent, {
-            size: 12 * percent,
-            color: this.isNight ? 'blue' : 'yellow',
-            textBaseline: 'bottom'
-        })
 
-        // Draw the sanctuary
-        if (this.hasSancturay) {
-            Renderer.rectFromCenter(40 * percent, 10 * percent, 7 * percent, 7 * percent, {
-                fillStyle: 'yellow'
+        if (this.isHided) {
+            Renderer.roundedRect(
+                0, 0, this.width!, this.height!, 12, {
+                fillStyle: 'grey',
+                lineWidth: 0
             })
-        }
+        } else {
+            // Draw the card relative to 0, 0
+            Renderer.roundedRect(
+                0, 0, this.width!, this.height!, 12, {
+                fillStyle: this.color,
+                lineWidth: 0
+            })
+            // Basic unit
+            const percent = this.width! / 100;
 
-        // Draw the resources
-        const resourcesKeys = Object.keys(this.resources)
-        let resourceX = 95 * percent;
-        const resourceWidth = 10 * percent
-        const resourceMargin = 2 * percent
+            // Draw the number
+            Renderer.circle(15 * percent, 15 * percent, 12 * percent, {
+                strokeStyle: this.isNight ? 'blue' : 'yellow',
+                lineWidth: 2
+            })
+            Renderer.centeredText(this.index.toString(), 15 * percent, 15 * percent, {
+                size: 12 * percent,
+                color: this.isNight ? 'blue' : 'yellow',
+                textBaseline: 'bottom'
+            })
 
-        for (let i = 0; i < resourcesKeys.length; i++) {
-            let color = 'red'
-            switch (resourcesKeys[i]) {
-                case 'bull':
-                    color = 'red'
-                    break
-                case 'blues':
-                    color = 'blue'
-                    break
-                case 'ananas':
-                    color = 'yellow'
-                    break
-            }
-
-            for (let amount = 0; amount < this.resources[resourcesKeys[i]]; amount++) {
-                Renderer.rect(resourceX - resourceWidth, 5 * percent, resourceWidth, resourceWidth, {
-                    fillStyle: color
+            // Draw the sanctuary
+            if (this.hasSancturay) {
+                Renderer.rectFromCenter(40 * percent, 10 * percent, 7 * percent, 7 * percent, {
+                    fillStyle: 'yellow'
                 })
-                resourceX -= resourceWidth + resourceMargin
             }
+
+            // Draw the resources
+            const resourcesKeys = Object.keys(this.resources)
+            let resourceX = 95 * percent;
+            const resourceWidth = 10 * percent
+            const resourceMargin = 2 * percent
+
+            for (let i = 0; i < resourcesKeys.length; i++) {
+                let color = 'red'
+                switch (resourcesKeys[i]) {
+                    case 'bull':
+                        color = 'red'
+                        break
+                    case 'blues':
+                        color = 'blue'
+                        break
+                    case 'ananas':
+                        color = 'yellow'
+                        break
+                }
+
+                for (let amount = 0; amount < this.resources[resourcesKeys[i]]; amount++) {
+                    Renderer.rect(resourceX - resourceWidth, 5 * percent, resourceWidth, resourceWidth, {
+                        fillStyle: color
+                    })
+                    resourceX -= resourceWidth + resourceMargin
+                }
+            }
+
+            // TODO: Draw the conditions
         }
-
-        // Draw the conditions
-
-
         ctx.restore()
     }
 }
@@ -204,31 +215,76 @@ const CARDS = [
     new Card(14, Color.Red, { ananas: 1 }, {}, new NightPoint(2)),
     new Card(45, Color.Green, { blues: 1 }, { bull: 3 }, new StaticPoints(13)),
 
-    // Sample cards 
+    // Sample data
+    new Card(44, Color.Yellow, {}, { blues: 1, ananas: 1 }, new ColorsPoint(2, [Color.Yellow, Color.Blue])),
+    new Card(44, Color.Yellow, {}, { blues: 1, ananas: 1 }, new ColorsPoint(2, [Color.Yellow, Color.Blue])),
+    new Card(44, Color.Yellow, {}, { blues: 1, ananas: 1 }, new ColorsPoint(2, [Color.Yellow, Color.Blue])),
+    new Card(44, Color.Yellow, {}, { blues: 1, ananas: 1 }, new ColorsPoint(2, [Color.Yellow, Color.Blue])),
+    new Card(44, Color.Yellow, {}, { blues: 1, ananas: 1 }, new ColorsPoint(2, [Color.Yellow, Color.Blue])),
+    new Card(44, Color.Yellow, {}, { blues: 1, ananas: 1 }, new ColorsPoint(2, [Color.Yellow, Color.Blue])),
+    new Card(44, Color.Yellow, {}, { blues: 1, ananas: 1 }, new ColorsPoint(2, [Color.Yellow, Color.Blue])),
+    new Card(44, Color.Yellow, {}, { blues: 1, ananas: 1 }, new ColorsPoint(2, [Color.Yellow, Color.Blue])),
+    new Card(44, Color.Yellow, {}, { blues: 1, ananas: 1 }, new ColorsPoint(2, [Color.Yellow, Color.Blue])),
+    new Card(44, Color.Yellow, {}, { blues: 1, ananas: 1 }, new ColorsPoint(2, [Color.Yellow, Color.Blue])),
+    new Card(44, Color.Yellow, {}, { blues: 1, ananas: 1 }, new ColorsPoint(2, [Color.Yellow, Color.Blue])),
+    new Card(44, Color.Yellow, {}, { blues: 1, ananas: 1 }, new ColorsPoint(2, [Color.Yellow, Color.Blue])),
+    new Card(44, Color.Yellow, {}, { blues: 1, ananas: 1 }, new ColorsPoint(2, [Color.Yellow, Color.Blue])),
+    new Card(44, Color.Yellow, {}, { blues: 1, ananas: 1 }, new ColorsPoint(2, [Color.Yellow, Color.Blue])),
+    new Card(44, Color.Yellow, {}, { blues: 1, ananas: 1 }, new ColorsPoint(2, [Color.Yellow, Color.Blue])),
     new Card(44, Color.Yellow, {}, { blues: 1, ananas: 1 }, new ColorsPoint(2, [Color.Yellow, Color.Blue])),
     new Card(49, Color.Blue, {}, { blues: 2, ananas: 1 }, new StaticPoints(12), true),
     new Card(14, Color.Red, { ananas: 1 }, {}, new NightPoint(2)),
-    new Card(45, Color.Green, { blues: 2 }, { bull: 3 }, new StaticPoints(13)),
-    new Card(44, Color.Yellow, {}, { blues: 1, ananas: 1 }, new ColorsPoint(2, [Color.Yellow, Color.Blue])),
+    new Card(45, Color.Green, { blues: 1 }, { bull: 3 }, new StaticPoints(13)),
     new Card(49, Color.Blue, {}, { blues: 2, ananas: 1 }, new StaticPoints(12), true),
     new Card(14, Color.Red, { ananas: 1 }, {}, new NightPoint(2)),
-    new Card(45, Color.Green, { blues: 2 }, { bull: 3 }, new StaticPoints(13)),
-    new Card(44, Color.Yellow, {}, { blues: 1, ananas: 1 }, new ColorsPoint(2, [Color.Yellow, Color.Blue])),
+    new Card(45, Color.Green, { blues: 1 }, { bull: 3 }, new StaticPoints(13)),
     new Card(49, Color.Blue, {}, { blues: 2, ananas: 1 }, new StaticPoints(12), true),
     new Card(14, Color.Red, { ananas: 1 }, {}, new NightPoint(2)),
-    new Card(45, Color.Green, { blues: 2 }, { bull: 3 }, new StaticPoints(13)),
-    new Card(44, Color.Yellow, {}, { blues: 1, ananas: 1 }, new ColorsPoint(2, [Color.Yellow, Color.Blue])),
+    new Card(45, Color.Green, { blues: 1 }, { bull: 3 }, new StaticPoints(13)),
     new Card(49, Color.Blue, {}, { blues: 2, ananas: 1 }, new StaticPoints(12), true),
     new Card(14, Color.Red, { ananas: 1 }, {}, new NightPoint(2)),
-    new Card(45, Color.Green, { blues: 2 }, { bull: 3 }, new StaticPoints(13)),
-    new Card(44, Color.Yellow, {}, { blues: 1, ananas: 1 }, new ColorsPoint(2, [Color.Yellow, Color.Blue])),
+    new Card(45, Color.Green, { blues: 1 }, { bull: 3 }, new StaticPoints(13)),
     new Card(49, Color.Blue, {}, { blues: 2, ananas: 1 }, new StaticPoints(12), true),
     new Card(14, Color.Red, { ananas: 1 }, {}, new NightPoint(2)),
-    new Card(45, Color.Green, { blues: 2 }, { bull: 3 }, new StaticPoints(13)),
+    new Card(45, Color.Green, { blues: 1 }, { bull: 3 }, new StaticPoints(13)),
+    new Card(49, Color.Blue, {}, { blues: 2, ananas: 1 }, new StaticPoints(12), true),
+    new Card(14, Color.Red, { ananas: 1 }, {}, new NightPoint(2)),
+    new Card(45, Color.Green, { blues: 1 }, { bull: 3 }, new StaticPoints(13)),
+    new Card(49, Color.Blue, {}, { blues: 2, ananas: 1 }, new StaticPoints(12), true),
+    new Card(14, Color.Red, { ananas: 1 }, {}, new NightPoint(2)),
+    new Card(45, Color.Green, { blues: 1 }, { bull: 3 }, new StaticPoints(13)),
+    new Card(49, Color.Blue, {}, { blues: 2, ananas: 1 }, new StaticPoints(12), true),
+    new Card(14, Color.Red, { ananas: 1 }, {}, new NightPoint(2)),
+    new Card(45, Color.Green, { blues: 1 }, { bull: 3 }, new StaticPoints(13)),
+    new Card(49, Color.Blue, {}, { blues: 2, ananas: 1 }, new StaticPoints(12), true),
+    new Card(14, Color.Red, { ananas: 1 }, {}, new NightPoint(2)),
+    new Card(45, Color.Green, { blues: 1 }, { bull: 3 }, new StaticPoints(13)),
+    new Card(49, Color.Blue, {}, { blues: 2, ananas: 1 }, new StaticPoints(12), true),
+    new Card(14, Color.Red, { ananas: 1 }, {}, new NightPoint(2)),
+    new Card(45, Color.Green, { blues: 1 }, { bull: 3 }, new StaticPoints(13)),
+    new Card(49, Color.Blue, {}, { blues: 2, ananas: 1 }, new StaticPoints(12), true),
+    new Card(14, Color.Red, { ananas: 1 }, {}, new NightPoint(2)),
+    new Card(45, Color.Green, { blues: 1 }, { bull: 3 }, new StaticPoints(13)),
+    new Card(49, Color.Blue, {}, { blues: 2, ananas: 1 }, new StaticPoints(12), true),
+    new Card(14, Color.Red, { ananas: 1 }, {}, new NightPoint(2)),
+    new Card(45, Color.Green, { blues: 1 }, { bull: 3 }, new StaticPoints(13)),
+    new Card(49, Color.Blue, {}, { blues: 2, ananas: 1 }, new StaticPoints(12), true),
+    new Card(14, Color.Red, { ananas: 1 }, {}, new NightPoint(2)),
+    new Card(45, Color.Green, { blues: 1 }, { bull: 3 }, new StaticPoints(13)),
+    new Card(49, Color.Blue, {}, { blues: 2, ananas: 1 }, new StaticPoints(12), true),
+    new Card(14, Color.Red, { ananas: 1 }, {}, new NightPoint(2)),
+    new Card(45, Color.Green, { blues: 1 }, { bull: 3 }, new StaticPoints(13)),
+    new Card(49, Color.Blue, {}, { blues: 2, ananas: 1 }, new StaticPoints(12), true),
+    new Card(14, Color.Red, { ananas: 1 }, {}, new NightPoint(2)),
+    new Card(45, Color.Green, { blues: 1 }, { bull: 3 }, new StaticPoints(13)),
+    new Card(49, Color.Blue, {}, { blues: 2, ananas: 1 }, new StaticPoints(12), true),
+    new Card(14, Color.Red, { ananas: 1 }, {}, new NightPoint(2)),
+    new Card(45, Color.Green, { blues: 1 }, { bull: 3 }, new StaticPoints(13)),
 ]
+
+
 
 export {
     Card,
     CARDS,
-    CARD_SIZE
 }
