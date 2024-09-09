@@ -158,7 +158,17 @@ class Env extends GameEnvironement {
         this.players.forEach(player => {
             player.render()
         })
-        // this.deck[0].render(100, 100)
+
+        // DEBUG
+        if (false) {
+            let card = this.deck[0]
+            card.moveTo(100, 100)
+            card.width = 200
+            card.height = 200
+            card.isHided = false
+            card.render()
+        }
+
         Renderer.endFrame()
     }
 
