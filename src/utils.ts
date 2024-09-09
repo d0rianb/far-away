@@ -1,4 +1,4 @@
-export function shuffle(array: Array) {
+export function shuffle<T>(array: Array<T>) {
     let currentIndex = array.length;
 
     // While there remain elements to shuffle...
@@ -13,6 +13,6 @@ export function shuffle(array: Array) {
     }
 }
 
-export function all(arr: Array<T>, predicate: Function): boolean {
+export function all<T>(arr: Array<T>, predicate: ((val: T) => boolean)): boolean {
     return arr.filter(predicate).length == arr.length
 }

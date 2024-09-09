@@ -1,4 +1,4 @@
-import { GameObject, Renderer, Animation } from 'unrail-engine'
+import { GameObject, Renderer } from 'unrail-engine'
 import { Card } from './card'
 
 class Player extends GameObject {
@@ -7,6 +7,10 @@ class Player extends GameObject {
     orientation: number // angle
     selectedCardIndex: number
     isOwnPlayer: boolean
+
+    // Refine super attributes, eliminating the null ckeck
+    width: number
+    height: number
 
     constructor(hand: Array<Card>, x: number, y: number, width: number, height: number, orientation: number) {
         super(x, y, width, height)
@@ -56,7 +60,7 @@ class Player extends GameObject {
             let card = this.hand[i]
             card.width = DECK_CARD_SIZE
             card.height = DECK_CARD_SIZE
-            let x = this.x + (card.width + cardMargin) * i * (renderVertically == 0);
+            let x = this.x + (card.width + cardMargin) * i * (renderVertically == 0)
             let y = this.y + (card.width + cardMargin) * i * (renderVertically == 1)
             if (renderVertically) {
                 if (Math.cos(this.orientation) > 0) {

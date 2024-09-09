@@ -7,8 +7,11 @@ import { shuffle, all } from './utils.ts';
 const CARD_PER_PLAYER: number = 3
 
 enum State {
+    /// Each player should pay one card
     Play = 0,
+    /// If some players have santury, they should pick one of them
     Sanctuary = 1,
+    /// Each player pick a new card 
     Pick = 2
 }
 
@@ -35,12 +38,12 @@ class Env extends GameEnvironement {
         for (let i = 0; i < playerNumber; i++) {
             const orientation = -Math.PI / 2 + i * 2 * Math.PI / playerNumber
             const isVertical = Math.abs(Math.cos(orientation)) > 0.7
-            let playerWidth, playerHeight
+            let playerWidth: number, playerHeight: number
             if (isVertical) {
                 playerHeight = height! / 3 * 2
                 playerWidth = height! / 3
             } else { // Horizontal
-                playerWidth = width! - height / 3 * 2
+                playerWidth = width! - height! / 3 * 2
                 playerHeight = height! / 3
 
             }
@@ -58,9 +61,9 @@ class Env extends GameEnvironement {
         }
         this.players[2].isOwnPlayer = true
 
-        console.log(this.players)
         this.initEvents()
         Renderer.create()
+        this.update()
     }
 
     initEvents(): void {
@@ -78,7 +81,7 @@ class Env extends GameEnvironement {
                     let sortedPlayers = this.players
                         .slice()
                         .filter(player => player.hand.length == 2 && player.playedCards.length > 0)
-                        .sort((playerA, playerB) => playerA.getLastCard()?.index - playerB.getLastCard()?.index)
+                        .sort((playerA, playerB) => playerA.getLastCard()!.index - playerB.getLastCard()!.index)
                     if (sortedPlayers.length > 0) {
                         let playerToChoose = sortedPlayers[0]
                         for (let i = 0; i < this.visibleCards.length; i++) {
@@ -94,6 +97,8 @@ class Env extends GameEnvironement {
                     }
                     break
             }
+
+            this.update()
         })
     }
 
@@ -131,7 +136,8 @@ class Env extends GameEnvironement {
     }
 
     update(): void {
-        this.checkState()
+        // Should manually get called after every event succeptible to chnage the game state
+        this.checkState() // has to be called at the begining & the end of the update method
         const cardMargin = 5
 
         for (let i = 0; i < this.visibleCards.length; i++) {
@@ -144,9 +150,8 @@ class Env extends GameEnvironement {
             card.moveTo(x, y)
         }
 
-
         this.players.forEach(player => player.update())
-        this.render()
+        this.checkState() // has to be called at the begining & the end of the update method
     }
 
 

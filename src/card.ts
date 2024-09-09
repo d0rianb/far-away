@@ -207,6 +207,10 @@ class Card extends GameObject {
     angle: number;
     isHided: boolean
 
+    // Refine super attributes, eliminating the null ckeck
+    width: number
+    height: number
+
     constructor(index: number, color: Color, resources: Resources, conditions: Resources, points: PointType, hasSancturay: boolean = false) {
         // Init the card at 0, 0
         super(0, 0, DEFAULT_CARD_SIZE, DEFAULT_CARD_SIZE)
