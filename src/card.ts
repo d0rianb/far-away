@@ -12,13 +12,13 @@ type Resources = {
     blues?: number
 }
 
-function getResourceColor(res: ResourcesName): string {
+function getResourceColor(res: ResourcesName | string): string {
     switch (res) {
-        case ResourcesName.Bull:
+        case ResourcesName.Bull || 'bull':
             return 'red'
-        case ResourcesName.Ananas:
+        case ResourcesName.Ananas || 'ananas':
             return 'yellow'
-        case ResourcesName.Blues:
+        case ResourcesName.Blues || 'blues':
             return 'blue'
     }
 }
@@ -54,7 +54,7 @@ class StaticPoints implements PointType {
     render(width: number, height: number): void {
         Renderer.text(this.value.toString(), width / 2, height / 2, {
             size: Math.min(width, height) / 3,
-            textBaseline: 'bottom',
+            textBaseline: 'middle',
             color: 'white'
         })
     }
@@ -249,6 +249,21 @@ class Card extends GameObject {
         }
     }
 
+    renderResources(res: Resources, resourceInitialX: number, resourceInitialY: number, resourceWidth: number, resourceHeight: number, resourceMargin: number) {
+        const resourcesKeys = Object.keys(res)
+
+        for (let i = 0; i < resourcesKeys.length; i++) {
+            let color = getResourceColor(resourcesKeys[i])
+            for (let amount = 0; amount < res[resourcesKeys[i]]; amount++) {
+                Renderer.rect(resourceInitialX - resourceWidth, resourceInitialY, resourceWidth, resourceHeight, {
+                    fillStyle: color,
+                    lineWidth: 0.5
+                })
+                resourceInitialX -= resourceWidth + resourceMargin
+            }
+        }
+    }
+
     render(): void {
         const ctx = Renderer.getContext()
         ctx.save()
@@ -266,14 +281,14 @@ class Card extends GameObject {
             Renderer.roundedRect(
                 0, 0, this.width!, this.height!, 12, {
                 fillStyle: 'grey',
-                lineWidth: 0
+                lineWidth: 1
             })
         } else {
             // Draw the card relative to 0, 0
             Renderer.roundedRect(
                 0, 0, this.width!, this.height!, 12, {
                 fillStyle: this.color,
-                lineWidth: 0
+                lineWidth: 1
             })
             // Basic unit
             const percent = this.width! / 100;
@@ -292,70 +307,26 @@ class Card extends GameObject {
             // Draw the sanctuary
             if (this.hasSancturay) {
                 Renderer.rectFromCenter(40 * percent, 10 * percent, 7 * percent, 7 * percent, {
-                    fillStyle: 'yellow'
+                    fillStyle: 'yellow',
+                    lineWidth: 1,
+                    strokeStyle: 'rgb(226, 188, 116)'
                 })
             }
 
-            // Draw the resources
-            {
-                // TODO: refactor as a method
-                const resourcesKeys = Object.keys(this.resources)
-                let resourceX = 95 * percent;
+            { // Draw the resources
+                const resourceInitialX = 95 * percent;
+                const resourceInitialY = 5 * percent;
                 const resourceWidth = 10 * percent
                 const resourceMargin = 2 * percent
+                this.renderResources(this.resources, resourceInitialX, resourceInitialY, resourceWidth, resourceWidth, resourceMargin)
 
-                for (let i = 0; i < resourcesKeys.length; i++) {
-                    let color = 'red'
-                    switch (resourcesKeys[i]) {
-                        case 'bull':
-                            color = 'red'
-                            break
-                        case 'blues':
-                            color = 'blue'
-                            break
-                        case 'ananas':
-                            color = 'yellow'
-                            break
-                    }
-
-                    for (let amount = 0; amount < this.resources[resourcesKeys[i]]; amount++) {
-                        Renderer.rect(resourceX - resourceWidth, 5 * percent, resourceWidth, resourceWidth, {
-                            fillStyle: color
-                        })
-                        resourceX -= resourceWidth + resourceMargin
-                    }
-                }
             }
-
-            // Draw the conditions
-            {
-                const resourcesKeys = Object.keys(this.conditions)
-                let resourceX = 90 * percent;
-                const resourcesY = 50 * percent
+            { // Draw the conditions
+                let resourceInitialX = 90 * percent;
+                const resourceInitialY = 50 * percent
                 const resourceWidth = 6 * percent
                 const resourceMargin = 2 * percent
-
-                for (let i = 0; i < resourcesKeys.length; i++) {
-                    let color = 'red'
-                    switch (resourcesKeys[i]) {
-                        case 'bull':
-                            color = 'red'
-                            break
-                        case 'blues':
-                            color = 'blue'
-                            break
-                        case 'ananas':
-                            color = 'yellow'
-                            break
-                    }
-
-                    for (let amount = 0; amount < this.conditions[resourcesKeys[i]]; amount++) {
-                        Renderer.rect(resourceX - resourceWidth, resourcesY, resourceWidth, resourceWidth, {
-                            fillStyle: color
-                        })
-                        resourceX -= resourceWidth + resourceMargin
-                    }
-                }
+                this.renderResources(this.conditions, resourceInitialX, resourceInitialY, resourceWidth, resourceWidth, resourceMargin)
             }
             // Render the points
             ctx.translate(60 * percent, 60 * percent)

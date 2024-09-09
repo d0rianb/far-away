@@ -151,7 +151,7 @@ class Env extends GameEnvironement {
 
 
     render(): void {
-        Renderer.beginFrame()
+        Renderer.beginFrame('#fefefe')
 
         this.visibleCards.forEach(card => card.render())
 

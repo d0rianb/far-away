@@ -135,7 +135,9 @@ class Player extends GameObject {
 
     render(): void {
         Renderer.rect(this.x, this.y, this.width, this.height, {
-            fillStyle: '#eee'
+            fillStyle: '#eee',
+            strokeStyle: '#ddd',
+            lineWidth: 0
         })
 
         this.hand.forEach(card => card.render())
