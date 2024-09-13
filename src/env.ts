@@ -1,4 +1,4 @@
-import { clamp, GameEnvironement, getWindowDimensions, Renderer, Event } from 'unrail-engine';
+import { clamp, GameEnvironement, getWindowDimensions, Renderer, Event } from 'unrail-engine'
 
 import { Card, CARDS } from './card.ts'
 import { Player } from './player.ts';
@@ -24,7 +24,15 @@ class Env extends GameEnvironement {
     state: State
     rounds: number
 
-    constructor(playerNumber: number) {
+    // Refine super attributes, eliminating the null ckeck
+    width: number
+    height: number
+
+    constructor(playerNumber: number, ownPlayerIndex: number) {
+        if (ownPlayerIndex >= playerNumber) {
+            throw "Error: the own player index should be less than the total number of players"
+        }
+
         const { width, height } = getWindowDimensions()
         super(width, height)
 
@@ -34,23 +42,35 @@ class Env extends GameEnvironement {
         this.state = State.Play
         this.rounds = 1
 
+
+        // Dimension of each players
+        const nonOwnPlayerWidth = this.width * 2 / 3
+        const nonOwnPlayerHeight = this.height / 6
+        const ownPlayerWidth = this.width - 2 * nonOwnPlayerHeight
+        const ownPlayerHeight = 2 * nonOwnPlayerHeight
+
         this.players = []
         for (let i = 0; i < playerNumber; i++) {
             const orientation = -Math.PI / 2 + i * 2 * Math.PI / playerNumber
             const isVertical = Math.abs(Math.cos(orientation)) > 0.7
-            let playerWidth: number, playerHeight: number
-            if (isVertical) {
-                playerHeight = height! / 3 * 2
-                playerWidth = height! / 3
-            } else { // Horizontal
-                playerWidth = width! - height! / 3 * 2
-                playerHeight = height! / 3
 
+            let playerWidth = ownPlayerWidth
+            let playerHeight = ownPlayerHeight
+
+            // The main player should be larger than the others
+            if (i != ownPlayerIndex) {
+                playerWidth = nonOwnPlayerWidth
+                playerHeight = nonOwnPlayerHeight
             }
-            let x = width! / 2 + width! / 2 * Math.cos(orientation) - playerWidth / 2
-            let y = height! / 2 + height! / 2 * Math.sin(orientation) - playerHeight / 2
-            x = clamp(0, x, width! - playerWidth)
-            y = clamp(0, y, height! - playerHeight)
+
+            if (isVertical) { // Switch both axis
+                [playerWidth, playerHeight] = [playerHeight, playerWidth * this.height / this.width]
+            }
+
+            let x = this.width / 2 + this.width / 2 * Math.cos(orientation) - playerWidth / 2
+            let y = this.height / 2 + this.height / 2 * Math.sin(orientation) - playerHeight / 2
+            x = clamp(0, x, this.width - playerWidth)
+            y = clamp(0, y, this.height - playerHeight)
 
             this.players.push(new Player(
                 this.deck.splice(0, CARD_PER_PLAYER),
@@ -59,7 +79,8 @@ class Env extends GameEnvironement {
                 orientation
             ))
         }
-        this.players[2].isOwnPlayer = true
+
+        this.players[ownPlayerIndex].isOwnPlayer = true
 
         this.initEvents()
         Renderer.create()
@@ -87,17 +108,24 @@ class Env extends GameEnvironement {
                         for (let i = 0; i < this.visibleCards.length; i++) {
                             let card = this.visibleCards[i]
                             if (card.contains(x, y)) {
-                                let clickedCard = this.visibleCards.splice(i, 1)[0]
-                                if (!playerToChoose.isOwnPlayer) {
-                                    clickedCard.isHided = true
-                                }
-                                playerToChoose.hand.push(clickedCard)
+                                Event.emit('cardChoosen', { cardIndex: i, player: playerToChoose })
+                                break
                             }
                         }
                     }
                     break
             }
+            this.update()
+        })
 
+        Event.on('cardChoosen', ({ cardIndex, player }) => {
+            if (this.state != State.Pick) return
+            // TODO: check that the player is the one to choose
+            let clickedCard = this.visibleCards.splice(cardIndex, 1)[0]
+            if (!player.isOwnPlayer) {
+                clickedCard.isHided = true
+            }
+            player.hand.push(clickedCard)
             this.update()
         })
     }
@@ -111,7 +139,7 @@ class Env extends GameEnvironement {
                         player.playedCards.push(player.hand.splice(player.selectedCardIndex, 1)[0])
                         player.selectedCardIndex = -1
                     })
-                    this.state = (this.state + 1) % 3
+                    this.changeState()
                 }
                 break
 
@@ -120,19 +148,24 @@ class Env extends GameEnvironement {
                 if (this.rounds == 8) {
                     // End of the game
                 } else {
-                    this.state = (this.state + 1) % 3
                 }
+                this.changeState()
                 break
             case State.Pick:
                 if (all(this.players, player => player.hand.length === 3)) {
                     // Discard the lasting cards
                     this.visibleCards = this.deck.splice(0, this.players.length + 1)
-                    this.state = (this.state + 1) % 3
+                    this.rounds += 1
+                    this.changeState()
                 }
-                this.rounds += 1
                 break
-
         }
+    }
+
+    changeState() {
+        // Update the state and emit the change for the bot to konw when to play
+        this.state = (this.state + 1) % 3
+        Event.emit('gameStateChanged', this)
     }
 
     update(): void {
@@ -145,7 +178,7 @@ class Env extends GameEnvironement {
             card.isHided = false
 
             let x = (this.width - this.visibleCards.length * (card.width + cardMargin)) / 2 + i * (card.width + cardMargin)
-            let y = (this.height - card.height) / 2
+            let y = (this.height - card.height) / 2 - this.height / 12 // offset by nonOwnPlayerHeight / 2
 
             card.moveTo(x, y)
         }
@@ -179,4 +212,4 @@ class Env extends GameEnvironement {
 
 }
 
-export { Env }
+export { Env, State }

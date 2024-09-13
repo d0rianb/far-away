@@ -21,6 +21,7 @@ function getResourceColor(res: ResourcesName | string): string {
         case ResourcesName.Blues || 'blues':
             return 'blue'
     }
+    return 'grey' // Default color
 }
 
 interface PointType {
@@ -144,13 +145,14 @@ class ColorsPoint implements PointType {
             color: 'black',
             textBaseline: 'top'
         }
+        const defaultRenderOptions = { lineWidth: 1 }
         const margin = 2 * percent
         if (this.colors.length == 1) {
-            Renderer.rect(20 * percent, height / 2 - rect_size / 2, rect_size, rect_size, { fillStyle: this.colors[0] })
+            Renderer.rect(20 * percent, height / 2 - rect_size / 2, rect_size, rect_size, { fillStyle: this.colors[0], ...defaultRenderOptions })
             Renderer.text(` = ${this.value}`, 20 * percent + rect_size + margin, height / 2 - rect_size, textOptions)
         } else if (this.colors.length == 2) {
-            Renderer.rect(10 * percent, height / 2 - rect_size / 2, rect_size, rect_size, { fillStyle: this.colors[0] })
-            Renderer.rect(10 * percent + margin + rect_size, height / 2 - rect_size / 2, rect_size, rect_size, { fillStyle: this.colors[1] })
+            Renderer.rect(10 * percent, height / 2 - rect_size / 2, rect_size, rect_size, { fillStyle: this.colors[0], ...defaultRenderOptions })
+            Renderer.rect(10 * percent + margin + rect_size, height / 2 - rect_size / 2, rect_size, rect_size, { fillStyle: this.colors[1], ...defaultRenderOptions })
             Renderer.text(` = ${this.value}`, 10 * percent + 2 * rect_size + 2 * margin, height / 2 - rect_size, textOptions)
         } else {
             console.log('Too many colors')
@@ -184,11 +186,50 @@ class NightPoint implements PointType {
     }
 }
 
+class FourColors implements PointType {
+    value: number;
+
+    constructor(value: number) {
+        this.value = value
+    }
+
+    callback(cards: Card[]): number {
+        let colorCount = {}
+        colorCount[Color.Red] = 0
+        colorCount[Color.Green] = 0
+        colorCount[Color.Blue] = 0
+        colorCount[Color.Yellow] = 0
+
+        cards.forEach(card => colorCount[card.color] += 1)
+        let min = Math.min(colorCount[Color.Red], colorCount[Color.Green], colorCount[Color.Blue], colorCount[Color.Yellow])
+        return min * this.value
+    }
+
+    render(width: number, height: number): void {
+        const percent = Math.min(width, height) / 100
+        const marginBetweenRect = 2 * percent;
+        const margin = 10 * percent
+        const rectSize = width / 4 - margin - marginBetweenRect
+        const defaultRenderOptions = { lineWidth: 1 }
+
+        Renderer.rect(margin, margin, rectSize, rectSize, { color: Color.Red, ...defaultRenderOptions })
+        Renderer.rect(margin + rectSize + marginBetweenRect, margin, rectSize, rectSize, { color: Color.Green, ...defaultRenderOptions })
+        Renderer.rect(margin, margin + rectSize + marginBetweenRect, rectSize, rectSize, { color: Color.Blue, ...defaultRenderOptions })
+        Renderer.rect(margin + rectSize + marginBetweenRect, margin + rectSize + marginBetweenRect, rectSize, rectSize, { color: Color.Yellow, ...defaultRenderOptions })
+
+        Renderer.centeredText(` = ${this.value}`, width * 2 / 4, height / 2, {
+            size: Math.min(width, height) / 3,
+            textBaseline: 'middle',
+        })
+    }
+}
+
 enum Color {
     Blue = 'rgb(70, 150, 190)',
     Red = 'rgb(205, 100, 75)',
     Green = 'rgb(110, 175, 125)',
-    Yellow = 'rgb(220, 200, 90)'
+    Yellow = 'rgb(220, 200, 90)',
+    None = 'rgb(200, 200, 200)'  // for sanctuaries
 }
 
 const DEFAULT_CARD_SIZE: number = 90
@@ -297,16 +338,18 @@ class Card extends GameObject {
             // Basic unit
             const percent = this.width! / 100;
 
-            // Draw the number
-            Renderer.circle(15 * percent, 15 * percent, 12 * percent, {
-                strokeStyle: this.isNight ? 'blue' : 'yellow',
-                lineWidth: 2
-            })
-            Renderer.centeredText(this.index.toString(), 15 * percent, 15 * percent, {
-                size: 12 * percent,
-                color: this.isNight ? 'blue' : 'yellow',
-                textBaseline: 'bottom'
-            })
+            if (this.index > 0) {
+                // Draw the number
+                Renderer.circle(15 * percent, 15 * percent, 12 * percent, {
+                    strokeStyle: this.isNight ? 'blue' : 'yellow',
+                    lineWidth: 2
+                })
+                Renderer.centeredText(this.index.toString(), 15 * percent, 15 * percent, {
+                    size: 12 * percent,
+                    color: this.isNight ? 'blue' : 'yellow',
+                    textBaseline: 'bottom'
+                })
+            }
 
             // Draw the sanctuary
             if (this.hasSancturay) {
@@ -411,4 +454,7 @@ const CARDS = [
 export {
     Card,
     CARDS,
+
+    Color, Resources, PointType,
+    NoPoint, NightPoint, ColorsPoint, ResourcePoints
 }

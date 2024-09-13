@@ -1,5 +1,6 @@
 import { GameObject, Renderer } from 'unrail-engine'
 import { Card } from './card'
+import { Sanctuary } from './sanctuary'
 
 class Player extends GameObject {
     hand: Array<Card>
@@ -7,6 +8,7 @@ class Player extends GameObject {
     orientation: number // angle
     selectedCardIndex: number
     isOwnPlayer: boolean
+    sancturies: Array<Sanctuary>
 
     // Refine super attributes, eliminating the null ckeck
     width: number
@@ -17,6 +19,7 @@ class Player extends GameObject {
         this.orientation = orientation
         this.hand = hand
         this.playedCards = []
+        this.sancturies = []
         this.selectedCardIndex = -1 // negative means no selected card
         this.isOwnPlayer = false // By default, hide all the cards
     }
@@ -25,8 +28,8 @@ class Player extends GameObject {
         for (let i = 0; i < this.hand.length; i++) {
             if (this.hand[i].contains(x, y)) {
                 if (this.selectedCardIndex == i) {
-                    // the card is already selected
                     this.selectedCardIndex = -1
+                    // the card is already selected
                 } else {
                     this.selectedCardIndex = i
                 }
@@ -44,22 +47,30 @@ class Player extends GameObject {
 
     updateDeck() {
         const renderVertically: boolean = Math.abs(Math.cos(this.orientation)) > 0.7
-        const selectedMargin = 20
+        let selectedMargin = 20
 
-        const DECK_CARD_SIZE = 90
+        // card size
+        let deck_card_size = this.height / 2 - selectedMargin
+        if (this.isOwnPlayer) {
+            if (renderVertically) { deck_card_size = this.width / 2 }
+        } else {
+            if (renderVertically) { deck_card_size = this.width / 3 }
+            else { deck_card_size = this.height / 3 }
+            selectedMargin = 10
+        }
 
         let cardMargin = 5
         let transversalMargin = 10
-        let centerOffset = (this.width - this.hand.length * DECK_CARD_SIZE - cardMargin * (this.hand.length - 1)) / 2
+        let centerOffset = (this.width - this.hand.length * deck_card_size - cardMargin * (this.hand.length - 1)) / 2
 
         if (renderVertically) {
-            centerOffset = (this.height - this.hand.length * DECK_CARD_SIZE - cardMargin * (this.hand.length - 1)) / 2
+            centerOffset = (this.height - this.hand.length * deck_card_size - cardMargin * (this.hand.length - 1)) / 2
         }
 
         for (let i = 0; i < this.hand.length; i++) {
             let card = this.hand[i]
-            card.width = DECK_CARD_SIZE
-            card.height = DECK_CARD_SIZE
+            card.width = deck_card_size
+            card.height = deck_card_size
             let x = this.x + (card.width + cardMargin) * i * (renderVertically == 0)
             let y = this.y + (card.width + cardMargin) * i * (renderVertically == 1)
             if (renderVertically) {
@@ -94,11 +105,12 @@ class Player extends GameObject {
     updatePlayedCards() {
         const renderVertically: boolean = Math.abs(Math.cos(this.orientation)) > 0.7
         let cardMargin = 3
-        let playedCardSize = (this.width - 9 * cardMargin) / 8
+        let playedCardSize = Math.min((Math.max(this.width, this.height) - 9 * cardMargin) / 8, this.height / 2 - 2 * cardMargin + 10)
 
-        if (renderVertically) {
-            playedCardSize = (this.height - 9 * cardMargin) / 8
+        if (!this.isOwnPlayer) {
+            playedCardSize *= 2 / 3
         }
+
 
         for (let i = 0; i < this.playedCards.length; i++) {
             let card = this.playedCards[i]
@@ -115,7 +127,7 @@ class Player extends GameObject {
 
             if (renderVertically) {
                 x = 5
-                y = 5
+                y = 5 + i * (playedCardSize + cardMargin)
 
                 if (Math.cos(this.orientation) < 0) {
                     x = this.width - playedCardSize - 5
